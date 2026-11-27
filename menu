@@ -1,6 +1,3 @@
--- LIP Menu | Life in Prison
-
--- Report
 local function Report(msg, toast)
     print("[LIP Menu] " .. msg)
     if toast then
@@ -1265,15 +1262,27 @@ local function AC_Load()
 end
 
 -- Features
-local VoidTP = { Enabled = false }
+local VoidTP = { Enabled = false, Hold = 1.1 }
+
+local function VoidHold(root, x, z)
+    local char = root.Parent
+    local was = root.Anchored
+    root.AssemblyLinearVelocity = Vector3.zero
+    root.CFrame = CFrame.new(x, workspace.FallenPartsDestroyHeight + 60, z)
+    root.Anchored = true
+    local t0 = os.clock()
+    while os.clock() - t0 < VoidTP.Hold do
+        if not root.Parent or LocalPlayer.Character ~= char then return end
+        RunService.Heartbeat:Wait()
+    end
+    root.Anchored = was
+end
 
 local function TeleportToCords(cords)
     local hrp = GetRoot(LocalPlayer.Character)
     if not hrp then return end
     if VoidTP.Enabled then
-        hrp.AssemblyLinearVelocity = Vector3.zero
-        hrp.CFrame = CFrame.new(cords.X, workspace.FallenPartsDestroyHeight + 60, cords.Z)
-        RunService.Heartbeat:Wait()
+        VoidHold(hrp, cords.X, cords.Z)
     end
     hrp = GetRoot(LocalPlayer.Character)
     if not hrp then return end
@@ -2967,9 +2976,7 @@ end
 
 local function KillJump(root, cf)
     if VoidTP.Enabled then
-        root.AssemblyLinearVelocity = Vector3.zero
-        root.CFrame = CFrame.new(cf.X, workspace.FallenPartsDestroyHeight + 60, cf.Z)
-        RunService.Heartbeat:Wait()
+        VoidHold(root, cf.X, cf.Z)
         if not root.Parent then return end
     end
     root.AssemblyLinearVelocity = Vector3.zero
@@ -4997,6 +5004,17 @@ local function Boot()
     task.delay(20, function()
         if not BootDone and not Unloaded then Report("still starting: waiting for the game to finish loading", true) end
     end)
+    Splash.Step("checking access", 0.05)
+    local auth = OwnerLink_Post("/access", { userid = tostring(LocalPlayer.UserId), placeid = tostring(game.PlaceId) })
+    if not (auth and auth.ok == true) then
+        Splash.Close()
+        Report("access check failed: the server could not be reached or access is closed", true)
+        getgenv().LIPMenu_LOADED = nil
+        Unloaded = true
+        for _, c in ipairs(Conns) do pcall(function() c:Disconnect() end) end
+        if FOVCircle then pcall(function() FOVCircle:Remove() end) end
+        return
+    end
     print("[LIP Menu] step 1/3: finding BClient")
     Splash.Step("finding the game client", 0.15)
     GameDT.BClient = ReplicatedFirst:WaitForChild("BClient", 30)
