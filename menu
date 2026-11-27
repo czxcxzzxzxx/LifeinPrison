@@ -1839,7 +1839,6 @@ local function UpdateESP()
     end
 end
 
--- Usage log (webhook)
 local HttpRequest = (typeof(request) == "function" and request)
     or (typeof(http_request) == "function" and http_request)
     or (syn and typeof(syn.request) == "function" and syn.request)
@@ -4988,11 +4987,6 @@ local function StartUI()
     settings:Section("Overlay")
     settings:Toggle("Watermark", true, function(s) wm:SetVisible(s) end)
     settings:Toggle("Array List", true, function(s) arr:SetVisible(s) end)
-    settings:Section("Privacy")
-    settings:Paragraph("Usage log",
-        "When the script loads it sends your Roblox username, user ID, executor name and avatar pictures to the script owner's server.")
-    settings:Paragraph("Owner link",
-        "While the script runs it checks in with the owner's server every few seconds (user ID, name, current game server). The owner can remotely kill, freeze, bring or kick you, send you to another server, or show a message on your screen. Nothing else is sent or run. Close the script to stop it.")
     settings:Section("Danger Zone")
     settings:Button("Fully Close", Unload)
 end
